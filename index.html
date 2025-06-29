@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WCLa Board</title>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-tertiary: #555555;
+            --border-color: #e0e0e0;
+            --hover-bg: #f0f0f0;
+            --shadow: rgba(0,0,0,0.1);
+            --overlay-bg: rgba(0,0,0,0.5);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #0d1117;
+            --text-primary: #e6e6e6;
+            --text-secondary: #b3b3b3;
+            --text-tertiary: #cccccc;
+            --border-color: #30363d;
+            --hover-bg: #21262d;
+            --shadow: rgba(0,0,0,0.3);
+            --overlay-bg: rgba(0,0,0,0.7);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* ヘッダー */
+        .header {
+            background-color: var(--bg-primary);
+            border-bottom: 1px solid var(--border-color);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 4px var(--shadow);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* メニューボタン */
+        .menu-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            margin-right: 16px;
+        }
+
+        .menu-toggle:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .menu-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+        }
+
+        .menu-icon span {
+            display: block;
+            height: 3px;
+            background-color: var(--text-primary);
+            border-radius: 2px;
+            transition: all 0.3s;
+        }
+
+        /* サービス名 */
+        .service-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-right: 32px;
+        }
+
+        /* ボード名（中央） */
+        .board-name {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-tertiary);
+        }
+
+        /* ヘッダー右側のコンテナ */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* 時刻・日付表示 */
+        .datetime {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            white-space: nowrap;
+        }
+
+        /* ダークモード切り替えボタン */
+        .theme-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .theme-icon {
+            width: 20px;
+            height: 20px;
+            fill: var(--text-secondary);
+            transition: fill 0.3s ease;
+        }
+
+        /* 設定ボタン */
+        .settings-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .settings-btn:hover {
+            background-color: var(--hover-bg);
+        }
+
+        .settings-icon {
+            width: 24px;
+            height: 24px;
+            fill: var(--text-secondary);
+            transition: fill 0.3s ease;
+        }
+
+        /* サイドバー */
+        .sidebar {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            width: 280px;
+            height: calc(100vh - 60px);
+            background-color: var(--bg-primary);
+            border-right: 1px solid var(--border-color);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            z-index: 999;
+            box-shadow: 2px 0 4px var(--shadow);
+        }
+
+        .sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-content {
+            padding: 20px;
+        }
+
+        .sidebar h3 {
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
+
+        /* メニュー項目 */
+        .menu-section {
+            margin-bottom: 24px;
+        }
+
+        .menu-list {
+            list-style: none;
+        }
+
+        .menu-item {
+            margin-bottom: 4px;
+        }
+
+        .menu-link {
+            display: block;
+            padding: 12px 16px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .menu-link:hover {
+            background-color: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .menu-link.active {
+            background-color: #007acc;
+            color: white;
+        }
+
+        .menu-link.active:hover {
+            background-color: #0066b3;
+        }
+
+        /* ボードアイコン */
+        .board-icon {
+            width: 18px;
+            height: 18px;
+            margin-right: 12px;
+            vertical-align: middle;
+            fill: currentColor;
+        }
+
+        /* メインコンテンツ */
+        .main-content {
+            margin-top: 60px;
+            padding: 20px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main-content.sidebar-open {
+            margin-left: 280px;
+        }
+
+        .board-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .board-container h1 {
+            color: var(--text-primary);
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        /* オーバーレイ */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-bg);
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            z-index: 998;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 16px;
+            }
+            
+            .service-name {
+                font-size: 18px;
+                margin-right: auto;
+            }
+            
+            .board-name {
+                display: none;
+            }
+            
+            .header-right {
+                margin-left: 0;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+            
+            .main-content.sidebar-open {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 0 12px;
+            }
+            
+            .service-name {
+                font-size: 16px;
+                margin-right: auto;
+            }
+            
+            .header-right {
+                gap: 6px;
+            }
+            
+            .datetime {
+                font-size: 12px;
+            }
+            
+            .theme-toggle, .settings-btn {
+                padding: 6px;
+            }
+            
+            .theme-icon, .settings-icon {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        /* 縦向き時の対応 */
+        @media (orientation: portrait) {
+            .board-name {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="header">
+        <button class="menu-toggle" id="menuToggle">
+            <div class="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </button>
+        
+        <div class="service-name">WCLa Board</div>
+        
+        <div class="board-name" id="boardName">マイボード</div>
+        
+        <div class="header-right">
+            <div class="datetime" id="datetime"></div>
+            
+            <button class="theme-toggle" id="themeToggle" title="テーマ切り替え">
+                <svg class="theme-icon" viewBox="0 0 24 24">
+                    <path id="themeIcon" d="M12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+                </svg>
+            </button>
+            
+            <button class="settings-btn" id="settingsBtn" title="設定">
+                <svg class="settings-icon" viewBox="0 0 24 24">
+                    <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- オーバーレイ -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- サイドバー -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <div class="menu-section">
+                <h3>ボード一覧</h3>
+                <ul class="menu-list">
+                    <li class="menu-item">
+                        <a href="#" class="menu-link active" data-board="main">
+                            <svg class="board-icon" viewBox="0 0 24 24">
+                                <path d="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z"/>
+                            </svg>
+                            メインボード
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-board="kanban">
+                            <svg class="board-icon" viewBox="0 0 24 24">
+                                <path d="M19,3H5C3.9,3 3,3.9 3,5V19C3,20.1 3.9,21 5,21H19C20.1,21 21,20.1 21,19V5C21,3.9 20.1,3 19,3M7,6H10V9H7V6M12,6H15V9H12V6M17,6H20V9H17V6M7,11H10V14H7V11M12,11H15V14H12V11M17,11H20V14H17V11M7,16H10V19H7V16M12,16H15V19H12V16M17,16H20V19H17V16Z"/>
+                            </svg>
+                            カンバンボード
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-board="calendar">
+                            <svg class="board-icon" viewBox="0 0 24 24">
+                                <path d="M19,3H18V1H16V3H8V1H6V3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5A2,2 0 0,0 19,3M19,19H5V8H19V19Z"/>
+                            </svg>
+                            カレンダーボード
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-board="inventory">
+                            <svg class="board-icon" viewBox="0 0 24 24">
+                                <path d="M12,2A3,3 0 0,1 15,5V7H20A1,1 0 0,1 21,8V10A1,1 0 0,1 20,11H19V20A2,2 0 0,1 17,22H7A2,2 0 0,1 5,20V11H4A1,1 0 0,1 3,10V8A1,1 0 0,1 4,7H9V5A3,3 0 0,1 12,2M12,4A1,1 0 0,0 11,5V7H13V5A1,1 0 0,0 12,4Z"/>
+                            </svg>
+                            持ち物管理ボード
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-board="notes">
+                            <svg class="board-icon" viewBox="0 0 24 24">
+                                <path d="M18,3H12.82C12.4,1.84 11.3,1 10,1C8.7,1 7.6,1.84 7.18,3H2A2,2 0 0,0 0,5V19A2,2 0 0,0 2,21H18A2,2 0 0,0 20,19V5A2,2 0 0,0 18,3M10,3A1,1 0 0,1 11,4A1,1 0 0,1 10,5A1,1 0 0,1 9,4A1,1 0 0,1 10,3Z"/>
+                            </svg>
+                            付箋ボード
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="#" class="menu-link" data-board="game">
+                            <svg class="board-icon" viewBox="0 0 24 24">
+                                <path d="M7.97,16L5,19C4.67,19.3 4.23,19.5 3.75,19.5A1.75,1.75 0 0,1 2,17.75V17.5L3,10.12C3.21,7.81 5.14,6 7.5,6H16.5C18.86,6 20.79,7.81 21,10.12L22,17.5V17.75A1.75,1.75 0 0,1 20.25,19.5C19.77,19.5 19.33,19.3 19,19L16.03,16H7.97M9.5,8A1.5,1.5 0 0,0 8,9.5A1.5,1.5 0 0,0 9.5,11A1.5,1.5 0 0,0 11,9.5A1.5,1.5 0 0,0 9.5,8M14.5,8A1.5,1.5 0 0,0 13,9.5A1.5,1.5 0 0,0 14.5,11A1.5,1.5 0 0,0 16,9.5A1.5,1.5 0 0,0 14.5,8Z"/>
+                            </svg>
+                            ゲームボード
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+
+    <!-- メインコンテンツ -->
+    <main class="main-content" id="mainContent">
+        <div class="board-container">
+            <h1 id="boardTitle">メインボード</h1>
+            <div id="boardContent">
+                <p>メインボードの内容がここに表示されます。</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // DOM要素の取得
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const overlay = document.getElementById('overlay');
+        const datetimeElement = document.getElementById('datetime');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const boardNameElement = document.getElementById('boardName');
+        const boardTitleElement = document.getElementById('boardTitle');
+        const boardContentElement = document.getElementById('boardContent');
+
+        // メニューの開閉状態
+        let sidebarOpen = false;
+        let currentBoard = 'main';
+
+        // ボード情報の定義
+        const boards = {
+            main: {
+                name: 'メインボード',
+                title: 'メインボード',
+                content: 'メインボードの内容がここに表示されます。'
+            },
+            kanban: {
+                name: 'カンバンボード',
+                title: 'カンバンボード',
+                content: 'カンバンボードの内容がここに表示されます。'
+            },
+            calendar: {
+                name: 'カレンダーボード',
+                title: 'カレンダーボード',
+                content: 'カレンダーボードの内容がここに表示されます。'
+            },
+            inventory: {
+                name: '持ち物管理ボード',
+                title: '持ち物管理ボード',
+                content: '持ち物管理ボードの内容がここに表示されます。'
+            },
+            notes: {
+                name: '付箋ボード',
+                title: '付箋ボード',
+                content: '付箋ボードの内容がここに表示されます。'
+            },
+            game: {
+                name: 'ゲームボード',
+                title: 'ゲームボード',
+                content: 'ゲームボードの内容がここに表示されます。'
+            }
+        };
+
+        // テーマの初期化
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+
+        // メニューボタンのクリックイベント
+        menuToggle.addEventListener('click', toggleSidebar);
+
+        // オーバーレイのクリックイベント
+        overlay.addEventListener('click', closeSidebar);
+
+        // テーマ切り替えボタンのクリックイベント
+        themeToggle.addEventListener('click', toggleTheme);
+
+        // メニューアイテムのクリックイベント
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const boardType = this.getAttribute('data-board');
+                switchBoard(boardType);
+                closeSidebar();
+            });
+        });
+
+        // サイドバーの開閉
+        function toggleSidebar() {
+            sidebarOpen = !sidebarOpen;
+            
+            if (sidebarOpen) {
+                openSidebar();
+            } else {
+                closeSidebar();
+            }
+        }
+
+        function openSidebar() {
+            sidebar.classList.add('open');
+            mainContent.classList.add('sidebar-open');
+            overlay.classList.add('active');
+            sidebarOpen = true;
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('open');
+            mainContent.classList.remove('sidebar-open');
+            overlay.classList.remove('active');
+            sidebarOpen = false;
+        }
+
+        // ボード切り替え機能
+        function switchBoard(boardType) {
+            if (boards[boardType]) {
+                currentBoard = boardType;
+                
+                // ヘッダーのボード名を更新
+                boardNameElement.textContent = boards[boardType].name;
+                
+                // メインコンテンツのタイトルと内容を更新
+                boardTitleElement.textContent = boards[boardType].title;
+                boardContentElement.innerHTML = `<p>${boards[boardType].content}</p>`;
+                
+                // メニューのアクティブ状態を更新
+                document.querySelectorAll('.menu-link').forEach(link => {
+                    link.classList.remove('active');
+                });
+                document.querySelector(`[data-board="${boardType}"]`).classList.add('active');
+            }
+        }
+
+        // テーマ切り替え
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            if (theme === 'dark') {
+                // 月のアイコン（ダークモード時）
+                themeIcon.setAttribute('d', 'M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.08,19.07C15.17,23 8.84,23 4.94,19.07C1.03,15.17 1.03,8.83 4.94,4.93C5.34,4.53 5.76,4.17 6.21,3.85C6.96,3.32 8.14,4.21 8.06,5.04C7.79,7.9 8.75,10.87 10.95,13.06C13.14,15.26 16.1,16.22 18.97,15.95M17.33,17.97C14.5,17.81 11.7,16.64 9.53,14.5C7.36,12.31 6.2,9.5 6.04,6.68C3.23,9.82 3.34,14.4 6.35,17.41C9.37,20.43 14,20.54 17.33,17.97Z');
+            } else {
+                // 太陽のアイコン（ライトモード時）
+                themeIcon.setAttribute('d', 'M12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z');
+            }
+        }
+
+        // 時刻と日付の更新
+        function updateDateTime() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            const dateTimeString = `${month}/${day}  ${hours}:${minutes}`;
+            datetimeElement.textContent = dateTimeString;
+        }
+
+        // 初回実行
+        updateDateTime();
+        
+        // 1分ごとに時刻を更新
+        setInterval(updateDateTime, 60000);
+
+        // ESCキーでサイドバーを閉じる
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && sidebarOpen) {
+                closeSidebar();
+            }
+        });
+
+        // 設定ボタンのクリックイベント（暫定）
+        document.getElementById('settingsBtn').addEventListener('click', function() {
+            alert('設定機能は後で実装予定です');
+        });
+    </script>
+</body>
+</html>
